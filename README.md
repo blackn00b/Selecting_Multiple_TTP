@@ -1,42 +1,52 @@
-# Bulk Section in MITRE Navigator
+# Bulk Scoring in MITRE Navigator
 
-This tool allows users to input multiple `techniqueID` and `tactic` values, each on a new line, and dynamically generate a JSON file compatible with the MITRE ATT&CK Navigator. The tool includes input validation for tactics and offers options to copy or download the generated JSON file.
+This project provides a user-friendly HTML page for generating a JSON file based on inputted MITRE ATT&CK Tactics and Techniques. It allows users to input technique IDs and tactics in bulk, validate the tactics against an allowed list, and generate a JSON output that can be copied or downloaded.
 
 ## Features
 
-- **Technique ID Input:** Users can enter multiple technique IDs, each on a new line.
-- **Tactic Input:** Users can enter multiple tactics, each on a new line. Only specific tactics are allowed.
-- **Input Validation:** The tool checks each tactic against a predefined list of allowed tactics. If any invalid tactics are entered, an error message is displayed, guiding the user to correct the input.
-- **Generate JSON:** Users can generate a JSON file that includes the provided technique IDs and tactics.
-- **Copy JSON:** The generated JSON can be copied to the clipboard for easy sharing.
-- **Download JSON:** Users can download the generated JSON file as `mitre-navigator.json`.
-- **MITRE Navigator Link:** A direct link to the MITRE ATT&CK Navigator is provided for quick access.
+- **Bulk Input**: Users can input multiple technique IDs and tactics, each on a new line.
+- **Input Sanitization**: The entered tactics are validated against a predefined list of allowed tactics.
+- **Score Integration**: Users can input a score that is added under each tactic in the generated JSON.
+- **JSON Output**: The JSON output can be viewed, copied, or downloaded.
+- **MITRE Navigator Link**: A direct link to the [MITRE ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/) is provided.
 
 ## Allowed Tactics
 
-The following tactics are accepted:
+The following tactics are allowed in the input:
 
-- `resource-development`
-- `initial-access`
-- `execution`
-- `persistence`
-- `privilege-escalation`
-- `defense-evasion`
-- `credential-access`
-- `discovery`
-- `lateral-movement`
-- `collection`
-- `command-and-control`
-- `exfiltration`
-- `impact`
+- reconnaissance
+- resource-development
+- initial-access
+- execution
+- persistence
+- privilege-escalation
+- defense-evasion
+- credential-access
+- discovery
+- lateral-movement
+- collection
+- command-and-control
+- exfiltration
+- impact
 
-## Usage
+## How to Use
 
-1. **Enter Technique IDs:**
-   - In the "Technique ID" textarea, input one technique ID per line.
+1. **Enter Technique IDs**: Input the technique IDs, one per line.
+2. **Enter Tactics**: Input the corresponding tactics, one per line. Ensure the tactics are from the allowed list.
+3. **Enter Score**: Provide an integer score that will be included in the JSON under each tactic.
+4. **Generate JSON**: Click the "Generate JSON" button to create the JSON output.
+5. **Copy or Download JSON**: You can copy the JSON to your clipboard or download it as a file.
 
-2. **Enter Tactics:**
-   - In the "Tactic" textarea, input one tactic per line. Each tactic must match one of the allowed tactics listed above.
+## Project Link
 
-3. **Generate JSON:**
-   - Click the "Generate JSON" button to
+You can access the project online via the following link:
+
+[Bulk Scoring in MITRE Navigator](https://blackn00b.github.io/Selecting_Multiple_TTP/)
+
+## Contributing
+
+Contributions are welcome! Feel free to open issues or submit pull requests for any improvements or bug fixes.
+
+## License
+
+This project is open-source and available under the MIT License.
