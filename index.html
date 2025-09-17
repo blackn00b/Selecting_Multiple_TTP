@@ -1,71 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bulk Section in MITRE Navigator</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Bulk Section in MITRE Navigator (ATT&CK v17)</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        h1 {
-            color: #333;
-        }
-        label {
-            font-weight: bold;
-            margin-top: 10px;
-        }
-        textarea, input {
-            width: 100%;
-            margin-bottom: 20px;
-            padding: 10px;
-            font-size: 16px;
-        }
-        .json-output {
-            width: 100%;
-            height: 200px;
-            background-color: #f4f4f4;
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-bottom: 20px;
-            white-space: pre-wrap;
-            overflow: auto;
-        }
-        .error {
-            color: red;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            margin-right: 10px;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .link {
-            margin-top: 20px;
-        }
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        label { font-weight: bold; margin-top: 10px; display:block; }
+        textarea, input { width: 100%; margin-bottom: 12px; padding: 10px; font-size: 16px; box-sizing: border-box; }
+        .json-output { width: 100%; height: 260px; background:#f4f4f4; border:1px solid #ccc; padding:10px; margin-bottom:12px; white-space:pre-wrap; overflow:auto; }
+        .error { color: red; font-weight: bold; margin-top: 10px; }
+        button { background-color:#4CAF50; color:white; padding:10px 20px; margin-right:10px; border:none; cursor:pointer; font-size:16px; }
+        button:hover { background-color:#45a049; }
+        .link { margin-top:20px; }
+        .small { font-size: 0.9rem; color: #555; }
     </style>
 </head>
 <body>
 
-    <h1>Bulk Section in MITRE Navigator</h1>
+    <h1>Bulk Section in MITRE Navigator (ATT&CK v17)</h1>
 
-    <label for="techniqueID">Technique ID (one per line):</label>
+    <label for="techniqueID">Technique ID (one per line, e.g. T1059.001 or T1059):</label>
     <textarea id="techniqueID" placeholder="Enter Technique IDs here..."></textarea>
 
-    <label for="tactic">Tactic (one per line):</label>
+    <label for="tactic">Tactic (one per line, align with techniques; common names like 'initial-access'):</label>
     <textarea id="tactic" placeholder="Enter Tactics here..."></textarea>
+    <div class="small">Allowed tactics (enterprise): resource-development, reconnaissance, initial-access, execution, persistence, privilege-escalation, defense-evasion, credential-access, discovery, lateral-movement, collection, command-and-control, exfiltration, impact</div>
 
-    <label for="score">Score (integer):</label>
-    <input type="number" id="score" placeholder="Enter Score here...">
+    <label for="score">Score (integer 0-100):</label>
+    <input type="number" id="score" placeholder="Enter Score here..." min="0" max="100">
 
     <div id="error" class="error"></div>
 
@@ -76,12 +40,14 @@
     <div class="json-output" id="jsonOutput"></div>
 
     <div class="link">
-        <a href="https://mitre-attack.github.io/attack-navigator/" target="_blank">Go to MITRE Navigator</a>
+        <a href="https://mitre-attack.github.io/attack-navigator/enterprise/" target="_blank" rel="noopener">Open MITRE Navigator (Enterprise)</a>
     </div>
 
     <script>
+        // Enterprise tactic canonical names accepted by the script
         const allowedTactics = [
             "resource-development",
+            "reconnaissance",
             "initial-access",
             "execution",
             "persistence",
@@ -93,14 +59,19 @@
             "collection",
             "command-and-control",
             "exfiltration",
-            "impact",
-            "reconnaissance"
+            "impact"
         ];
+
+        // helper: normalize lines -> remove empty lines and trim
+        function linesToArray(text) {
+            if (!text) return [];
+            return text.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+        }
 
         function sanitizeInput(inputArray) {
             let invalidTactics = [];
             inputArray.forEach(item => {
-                if (!allowedTactics.includes(item)) {
+                if (item && !allowedTactics.includes(item)) {
                     invalidTactics.push(item);
                 }
             });
@@ -108,42 +79,74 @@
         }
 
         function generateJSON() {
-            const techniqueID = document.getElementById('techniqueID').value.trim().split('\n');
-            const tactic = document.getElementById('tactic').value.trim().split('\n');
-            const score = parseInt(document.getElementById('score').value, 10);
+            const techniqueLines = linesToArray(document.getElementById('techniqueID').value);
+            const tacticLines = linesToArray(document.getElementById('tactic').value);
+            const scoreRaw = document.getElementById('score').value;
+            const score = scoreRaw === '' ? null : parseInt(scoreRaw, 10);
 
             const errorDiv = document.getElementById('error');
             errorDiv.textContent = '';
 
-            const invalidTactics = sanitizeInput(tactic);
-            if (invalidTactics.length > 0) {
-                errorDiv.textContent = 'Error: The following tactic(s) are not allowed: ' + invalidTactics.join(', ') + '. Please use only the following tactics:\n' + allowedTactics.join(', ');
+            // Validate presence of technique IDs
+            if (techniqueLines.length === 0) {
+                errorDiv.textContent = 'Error: Please enter at least one Technique ID (one per line).';
                 return;
             }
 
-            let techniques = techniqueID.map((id, index) => ({
-                "techniqueID": id,
-                "tactic": tactic[index] || "",
-                "color": "#74c476",
-                "comment": "",
-                "enabled": true,
-                "metadata": [],
-                "links": [],
-                "showSubtechniques": false,
-                "score": score
-            }));
+            // Validate tactics (if provided)
+            if (tacticLines.length > 0) {
+                const invalidTactics = sanitizeInput(tacticLines);
+                if (invalidTactics.length > 0) {
+                    errorDiv.textContent = 'Error: The following tactic(s) are not allowed: ' + invalidTactics.join(', ') + '. Please use only the following tactics:\n' + allowedTactics.join(', ');
+                    return;
+                }
+            }
+
+            // Build techniques array: if there are fewer tactics than techniques, remaining tactics left empty
+            const techniques = techniqueLines.map((id, index) => {
+                // Basic validation: technique IDs generally start with 'T' (allow also other values but warn if missing)
+                const tid = id;
+                const tacticForThis = tacticLines[index] || "";
+                const entry = {
+                    "techniqueID": tid,
+                    "tactic": tacticForThis,
+                    "color": "#74c476",
+                    "comment": "",
+                    "enabled": true,
+                    "metadata": [],
+                    "links": [],
+                    "showSubtechniques": false
+                };
+                if (score !== null && !isNaN(score)) {
+                    entry.score = score;
+                }
+                return entry;
+            });
 
             const jsonOutput = {
                 "name": "layer",
                 "versions": {
-                    "attack": "15",
-                    "navigator": "5.1.0",
+                    "attack": "17",
+                    "navigator": "5.1.1",
                     "layer": "4.5"
                 },
                 "domain": "enterprise-attack",
                 "description": "",
                 "filters": {
-                    "platforms": ["Windows", "Linux", "macOS", "Network", "PRE", "Containers", "Office 365", "SaaS", "Google Workspace", "IaaS", "Azure AD"]
+                    "platforms": [
+                        "Windows",
+                        "Linux",
+                        "macOS",
+                        "Network",
+                        "PRE",
+                        "Containers",
+                        "Office 365",
+                        "SaaS",
+                        "Google Workspace",
+                        "IaaS",
+                        "Azure AD",
+                        "ESXi"
+                    ]
                 },
                 "sorting": 0,
                 "layout": {
@@ -177,18 +180,30 @@
 
         function copyJSON() {
             const jsonOutput = document.getElementById('jsonOutput').textContent;
+            if (!jsonOutput) {
+                alert('Nothing to copy — generate JSON first.');
+                return;
+            }
             navigator.clipboard.writeText(jsonOutput).then(() => {
                 alert('JSON copied to clipboard!');
+            }).catch(() => {
+                alert('Copy failed — your browser may block clipboard access.');
             });
         }
 
         function downloadJSON() {
             const jsonOutput = document.getElementById('jsonOutput').textContent;
+            if (!jsonOutput) {
+                alert('Nothing to download — generate JSON first.');
+                return;
+            }
             const blob = new Blob([jsonOutput], { type: 'application/json' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = 'mitre-navigator.json';
+            link.download = 'mitre-navigator-v17-layer.json';
+            document.body.appendChild(link);
             link.click();
+            document.body.removeChild(link);
         }
     </script>
 
